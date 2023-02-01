@@ -1,7 +1,6 @@
 variable "namespace" {
   description = "Namespace to create the resources under"
   type = string
-  default = ""
 }
 
 variable "masters_api_port" {

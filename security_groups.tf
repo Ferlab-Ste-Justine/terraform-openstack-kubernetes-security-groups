@@ -1,41 +1,41 @@
 resource "openstack_networking_secgroup_v2" "k8_master" {
-  name                 = var.namespace == "" ? "k8-master" : "${var.namespace}-k8-master"
+  name                 = "${var.namespace}-kubernetes-master"
   description          = "Security group for kubernetes master"
   delete_default_rules = true
 }
 
 resource "openstack_networking_secgroup_v2" "k8_worker" {
-  name                 = var.namespace == "" ? "k8-worker" : "${var.namespace}-k8-worker"
+  name                 = "${var.namespace}-kubernetes-worker"
   description          = "Security group for kubernetes workers"
   delete_default_rules = true
 }
 
 resource "openstack_networking_secgroup_v2" "k8_load_balancer" {
-  name                 = var.namespace == "" ? "k8-lb" : "${var.namespace}-k8-lb"
+  name                 = "${var.namespace}-kubernetes-lb"
   description          = "Security group for kubernetes load balancer"
   delete_default_rules = true
 }
 
 resource "openstack_networking_secgroup_v2" "k8_load_balancer_tunnel" {
-  name                 = var.namespace == "" ? "k8-lb-tunnel" : "${var.namespace}-k8-lb-tunnel"
+  name                 = "${var.namespace}-kubernetes-lb-tunnel"
   description          = "Security group for kubernetes tunneled load balancer"
   delete_default_rules = true
 }
 
 resource "openstack_networking_secgroup_v2" "k8_master_client" {
-  name                 = var.namespace == "" ? "k8-master-client" : "${var.namespace}-k8-master-client"
+  name                 = "${var.namespace}-kubernetes-master-client"
   description          = "Security group for direct client of kubernetes workers"
   delete_default_rules = true
 }
 
 resource "openstack_networking_secgroup_v2" "k8_worker_client" {
-  name                 = var.namespace == "" ? "k8-worker-client" : "${var.namespace}-k8-worker-client"
+  name                 = "${var.namespace}-kubernetes-worker-client"
   description          = "Security group for direct client of kubernetes masters"
   delete_default_rules = true
 }
 
 resource "openstack_networking_secgroup_v2" "k8_bastion" {
-  name                 = var.namespace == "" ? "k8-bastion" : "${var.namespace}-k8-bastion"
+  name                 = "${var.namespace}-kubernetes-bastion"
   description          = "Security group for cluster's bastion"
   delete_default_rules = true
 }
@@ -127,7 +127,7 @@ resource "openstack_networking_secgroup_rule_v2" "k8_worker_full_access" {
 //Allow masters api traffic from allowed groups
 resource "openstack_networking_secgroup_rule_v2" "api_groups_k8_master_icmp_access_v4" {
   for_each = {
-    for group in local.kubernetes_master_api_access_groups : group.name => group if group.id != openstack_networking_secgroup_v2.k8_bastion.id
+    for group in local.kubernetes_master_api_access_groups : group.name => group if group.name != "${var.namespace}-kubernetes-bastion"
   }
 
   direction         = "ingress"
@@ -139,7 +139,7 @@ resource "openstack_networking_secgroup_rule_v2" "api_groups_k8_master_icmp_acce
 
 resource "openstack_networking_secgroup_rule_v2" "api_groups_k8_master_icmp_access_v6" {
   for_each = {
-    for group in local.kubernetes_master_api_access_groups : group.name => group if group.id != openstack_networking_secgroup_v2.k8_bastion.id
+    for group in local.kubernetes_master_api_access_groups : group.name => group if group.name != "${var.namespace}-kubernetes-bastion"
   }
 
   direction         = "ingress"
@@ -166,7 +166,7 @@ resource "openstack_networking_secgroup_rule_v2" "api_groups_k8_master_api_acces
 //Allow workers ingress traffic from allowed groups
 resource "openstack_networking_secgroup_rule_v2" "ingress_groups_k8_worker_icmp_access_v4" {
   for_each = {
-    for group in local.kubernetes_worker_ingress_access_groups : group.name => group if group.id != openstack_networking_secgroup_v2.k8_bastion.id
+    for group in local.kubernetes_worker_ingress_access_groups : group.name => group if group.name != "${var.namespace}-kubernetes-bastion"
   }
 
   direction         = "ingress"
@@ -178,7 +178,7 @@ resource "openstack_networking_secgroup_rule_v2" "ingress_groups_k8_worker_icmp_
 
 resource "openstack_networking_secgroup_rule_v2" "ingress_groups_k8_worker_icmp_access_v6" {
   for_each = {
-    for group in local.kubernetes_worker_ingress_access_groups : group.name => group if group.id != openstack_networking_secgroup_v2.k8_bastion.id
+    for group in local.kubernetes_worker_ingress_access_groups : group.name => group if group.name != "${var.namespace}-kubernetes-bastion"
   }
 
   direction         = "ingress"
