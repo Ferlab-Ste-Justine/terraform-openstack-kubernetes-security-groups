@@ -9,3 +9,7 @@ output "groups" {
     load_balancer_tunnel = openstack_networking_secgroup_v2.k8_load_balancer_tunnel
   }
 }
+
+output "member_group" {
+   value = openstack_networking_secgroup_v2.kubernetes_member
+}
