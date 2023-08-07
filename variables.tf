@@ -1,7 +1,7 @@
 variable "member_group_name" {
   description = "Name to give to the security group of kubernetes server"
   type = string
-  default = ""
+  default = "cqdg-qa-kubernetes-member"
 }
 
 variable "namespace" {
@@ -29,24 +29,6 @@ variable "workers_ingress_https_port" {
 
 variable "k8_worker_client_ids" {
   description = "Id of direct client of kubernetes masters"
-  type = list(string)
-  default = []
-}
-
-variable "kubernetes_nodes_full_access_groups_ids" {
-  description = "Id of kubernetes master and worker groups"
-  type = list(string)
-  default = []
-}
-
-variable "kubernetes_master_api_access_groups_ids" {
-  description = "Id of kubernetes master components groups"
-  type = list(string)
-  default = []
-}
-
-variable "kubernetes_worker_ingress_access_groups_ids" {
-  description = "Id of kubernetes worker ingress groups"
   type = list(string)
   default = []
 }
