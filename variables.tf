@@ -20,3 +20,41 @@ variable "workers_ingress_https_port" {
   type = number
   default = 30001
 }
+
+variable "k8_master_name" {
+  description = "Name for kubernetes master security group"
+  type        = string
+}
+
+variable "k8_worker_name" {
+  description = "Name for kubernetes worker security group"
+  type        = string
+}
+
+variable "k8_load_balancer_name" {
+  description = "Name for kubernetes load balancer security group"
+  type        = string
+}
+
+variable "k8_load_balancer_tunnel_name" {
+  description = "Name for kubernetes load balancer tunnel security group"
+  type        = string
+}
+
+variable "k8_master_client_group_ids" {
+  description = "Id of kubernetes master client security groups"
+  type = list(string)
+  default = []
+}
+
+variable "k8_bastion_group_ids" {
+  description = "Id of kubernetes bastion security groups"
+  type = list(string)
+  default = []
+}
+
+variable "k8_worker_client_group_ids" {
+  description = "Id of kubernetes worker client security groups"
+  type = list(string)
+  default = []
+}

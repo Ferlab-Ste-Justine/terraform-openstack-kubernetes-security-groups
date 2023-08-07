@@ -1,83 +1,63 @@
+# Security Groups
 resource "openstack_networking_secgroup_v2" "k8_master" {
-  name                 = "${var.namespace}-kubernetes-master"
+  name                 = var.k8_master_name
   description          = "Security group for kubernetes master"
   delete_default_rules = true
 }
 
 resource "openstack_networking_secgroup_v2" "k8_worker" {
-  name                 = "${var.namespace}-kubernetes-worker"
+  name                 = var.k8_worker_name
   description          = "Security group for kubernetes workers"
   delete_default_rules = true
 }
 
 resource "openstack_networking_secgroup_v2" "k8_load_balancer" {
-  name                 = "${var.namespace}-kubernetes-lb"
+  name                 = var.k8_load_balancer_name
   description          = "Security group for kubernetes load balancer"
   delete_default_rules = true
 }
 
 resource "openstack_networking_secgroup_v2" "k8_load_balancer_tunnel" {
-  name                 = "${var.namespace}-kubernetes-lb-tunnel"
+  name                 = var.k8_load_balancer_tunnel_name
   description          = "Security group for kubernetes tunneled load balancer"
   delete_default_rules = true
 }
 
-resource "openstack_networking_secgroup_v2" "k8_master_client" {
-  name                 = "${var.namespace}-kubernetes-master-client"
-  description          = "Security group for direct client of kubernetes workers"
-  delete_default_rules = true
-}
-
-resource "openstack_networking_secgroup_v2" "k8_worker_client" {
-  name                 = "${var.namespace}-kubernetes-worker-client"
-  description          = "Security group for direct client of kubernetes masters"
-  delete_default_rules = true
-}
-
-resource "openstack_networking_secgroup_v2" "k8_bastion" {
-  name                 = "${var.namespace}-kubernetes-bastion"
-  description          = "Security group for cluster's bastion"
-  delete_default_rules = true
-}
-
 locals {
-  outgoing_access_groups = [
+  outgoing_access_groups = flatten([
     openstack_networking_secgroup_v2.k8_master,
     openstack_networking_secgroup_v2.k8_worker,
     openstack_networking_secgroup_v2.k8_load_balancer,
     openstack_networking_secgroup_v2.k8_load_balancer_tunnel,
-    openstack_networking_secgroup_v2.k8_master_client,
-    openstack_networking_secgroup_v2.k8_worker_client,
-    openstack_networking_secgroup_v2.k8_bastion
-  ]
+    var.k8_master_client_group_ids,
+    var.k8_worker_client_group_ids,
+    var.k8_bastion_group_ids
+  ])
   kubernetes_nodes_full_access_groups = [
     openstack_networking_secgroup_v2.k8_master,
     openstack_networking_secgroup_v2.k8_worker
   ]
-  kubernetes_master_api_access_groups = [
+  kubernetes_master_api_access_groups = flatten([
     openstack_networking_secgroup_v2.k8_load_balancer,
     openstack_networking_secgroup_v2.k8_load_balancer_tunnel,
-    openstack_networking_secgroup_v2.k8_master_client,
-    openstack_networking_secgroup_v2.k8_bastion
-  ]
-  kubernetes_worker_ingress_access_groups = [
+    var.k8_master_client_group_ids,
+    var.k8_bastion_group_ids
+  ])
+  kubernetes_worker_ingress_access_groups = flatten([
     openstack_networking_secgroup_v2.k8_load_balancer,
     openstack_networking_secgroup_v2.k8_load_balancer_tunnel,
-    openstack_networking_secgroup_v2.k8_worker_client
-  ]
+    var.k8_worker_client_group_ids
+  ])
   bastion_ssh_accessible_groups = [
     openstack_networking_secgroup_v2.k8_master,
     openstack_networking_secgroup_v2.k8_worker,
     openstack_networking_secgroup_v2.k8_load_balancer,
     openstack_networking_secgroup_v2.k8_load_balancer_tunnel
   ]
-  externally_ssh_accessible_groups = [
-    openstack_networking_secgroup_v2.k8_bastion,
+  externally_ssh_accessible_groups = flatten([
+    var.k8_bastion_group_ids,
     openstack_networking_secgroup_v2.k8_load_balancer_tunnel
-  ]
-  //Additional rules below not described by above lists:
-  //k8_worker_client nodeport access on workers
-  //k8_load_balancer externally accessible api/ingress ports 
+  ])
 }
 
 //Allow all v4 and v6 outbound traffic
@@ -225,8 +205,14 @@ resource "openstack_networking_secgroup_rule_v2" "bastion_ssh_accessible_groups_
   direction         = "ingress"
   ethertype         = "IPv4"
   protocol          = "icmp"
-  remote_group_id   = openstack_networking_secgroup_v2.k8_bastion.id
-  security_group_id = each.value.id
+
+  dynamic "remote_group_id" {
+    for_each = var.bastion_group_ids
+    content {
+      remote_group_id   = remote_group_id.value
+      security_group_id = each.value.id
+    }
+  }
 }
 
 resource "openstack_networking_secgroup_rule_v2" "bastion_ssh_accessible_groups_icmp_access_v6" {
@@ -237,22 +223,34 @@ resource "openstack_networking_secgroup_rule_v2" "bastion_ssh_accessible_groups_
   direction         = "ingress"
   ethertype         = "IPv6"
   protocol          = "ipv6-icmp"
-  remote_group_id   = openstack_networking_secgroup_v2.k8_bastion.id
-  security_group_id = each.value.id
+
+  dynamic "remote_group_id" {
+    for_each = var.bastion_group_ids
+    content {
+      remote_group_id   = remote_group_id.value
+      security_group_id = each.value.id
+    }
+  }
 }
 
 resource "openstack_networking_secgroup_rule_v2" "bastion_ssh_accessible_groups_ssh_access" {
   for_each = {
     for group in local.bastion_ssh_accessible_groups : group.name => group
   }
-  
+
   direction         = "ingress"
   ethertype         = "IPv4"
   protocol          = "tcp"
   port_range_min    = 22
   port_range_max    = 22
-  remote_group_id   = openstack_networking_secgroup_v2.k8_bastion.id
-  security_group_id = each.value.id
+
+  dynamic "remote_group_id" {
+    for_each = var.bastion_group_ids
+    content {
+      remote_group_id   = remote_group_id.value
+      security_group_id = each.value.id
+    }
+  }
 }
 
 //Allow external ssh traffic on accessible groups
@@ -343,11 +341,12 @@ resource "openstack_networking_secgroup_rule_v2" "lb_icmp_external_v6" {
 
 //Allow all nodeport inbound traffic from worker clients
 resource "openstack_networking_secgroup_rule_v2" "k8_worker_client_access" {
+  for_each          = { for idx, id in var.k8_worker_client_group_ids : idx => id }
   direction         = "ingress"
   ethertype         = "IPv4"
   protocol          = "tcp"
   port_range_min    = 30000
   port_range_max    = 32768
-  remote_group_id  = openstack_networking_secgroup_v2.k8_worker_client.id
+  remote_group_id   = each.value
   security_group_id = openstack_networking_secgroup_v2.k8_worker.id
 }
