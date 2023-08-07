@@ -1,8 +1,3 @@
-variable "namespace" {
-  description = "Namespace to create the resources under"
-  type = string
-}
-
 variable "masters_api_port" {
   description = "Http port of the api on the k8 masters"
   type = number
@@ -38,6 +33,11 @@ variable "k8_load_balancer_name" {
 
 variable "k8_load_balancer_tunnel_name" {
   description = "Name for kubernetes load balancer tunnel security group"
+  type        = string
+}
+
+variable "k8_bastion_name" {
+  description = "Name of kubernetes bastion security group"
   type        = string
 }
 

@@ -107,7 +107,7 @@ resource "openstack_networking_secgroup_rule_v2" "k8_worker_full_access" {
 //Allow masters api traffic from allowed groups
 resource "openstack_networking_secgroup_rule_v2" "api_groups_k8_master_icmp_access_v4" {
   for_each = {
-    for group in local.kubernetes_master_api_access_groups : group.name => group if group.name != "${var.namespace}-kubernetes-bastion"
+    for group in local.kubernetes_master_api_access_groups : group.name => group if group.name != var.k8_bastion_name
   }
 
   direction         = "ingress"
@@ -119,7 +119,7 @@ resource "openstack_networking_secgroup_rule_v2" "api_groups_k8_master_icmp_acce
 
 resource "openstack_networking_secgroup_rule_v2" "api_groups_k8_master_icmp_access_v6" {
   for_each = {
-    for group in local.kubernetes_master_api_access_groups : group.name => group if group.name != "${var.namespace}-kubernetes-bastion"
+    for group in local.kubernetes_master_api_access_groups : group.name => group if group.name != var.k8_bastion_name
   }
 
   direction         = "ingress"
@@ -146,7 +146,7 @@ resource "openstack_networking_secgroup_rule_v2" "api_groups_k8_master_api_acces
 //Allow workers ingress traffic from allowed groups
 resource "openstack_networking_secgroup_rule_v2" "ingress_groups_k8_worker_icmp_access_v4" {
   for_each = {
-    for group in local.kubernetes_worker_ingress_access_groups : group.name => group if group.name != "${var.namespace}-kubernetes-bastion"
+    for group in local.kubernetes_worker_ingress_access_groups : group.name => group if group.name != var.k8_bastion_name
   }
 
   direction         = "ingress"
@@ -158,7 +158,7 @@ resource "openstack_networking_secgroup_rule_v2" "ingress_groups_k8_worker_icmp_
 
 resource "openstack_networking_secgroup_rule_v2" "ingress_groups_k8_worker_icmp_access_v6" {
   for_each = {
-    for group in local.kubernetes_worker_ingress_access_groups : group.name => group if group.name != "${var.namespace}-kubernetes-bastion"
+    for group in local.kubernetes_worker_ingress_access_groups : group.name => group if group.name != var.k8_bastion_name
   }
 
   direction         = "ingress"
