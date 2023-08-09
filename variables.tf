@@ -41,20 +41,29 @@ variable "k8_bastion_name" {
   type        = string
 }
 
-variable "k8_master_client_group_ids" {
-  description = "Id of kubernetes master client security groups"
-  type = list(string)
+variable "k8_master_client_groups" {
+  description = "List of kubernetes master client security groups"
+  type = list(object({
+    name = string
+    id   = string
+  }))
   default = []
 }
 
-variable "k8_bastion_group_ids" {
-  description = "Id of kubernetes bastion security groups"
-  type = list(string)
+variable "k8_bastion_groups" {
+  description = "List of kubernetes bastion security groups"
+  type = list(object({
+    name = string
+    id   = string
+  }))
   default = []
 }
 
-variable "k8_worker_client_group_ids" {
-  description = "Id of kubernetes worker client security groups"
-  type = list(string)
+variable "k8_worker_client_groups" {
+  description = "List of kubernetes worker client security groups"
+  type = list(object({
+    name = string
+    id   = string
+  }))
   default = []
 }

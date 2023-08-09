@@ -24,9 +24,9 @@ The module takes the following variables as input:
 - **masters_api_port**: Http port of the api on the k8 masters. Defaults to 6443.
 - **workers_ingress_http_port**: Http ingress nodeport on the kubernetes workers. Defaults to 30000.
 - **workers_ingress_https_port**: Https ingress nodeport on the kubernetes workers. Defaults to 30001.
-- **k8_master_client_group_ids**: Array of existing security group IDs for master clients.
-- **k8_worker_client_group_ids**: Array of existing security group IDs for worker clients.
-- **k8_bastion_group_ids**: Array of existing security group IDs for bastion.
+- **k8_master_client_groups**: Array of existing security groups for master clients. Elements should be of type **networking_secgroup_v2** (resource or data)
+- **k8_worker_client_groups**: Array of existing security groups for worker clients. Elements should be of type **networking_secgroup_v2** (resource or data)
+- **k8_bastion_groups**: Array of existing security groups for bastion. Elements should be of type **networking_secgroup_v2** (resource or data)
 
 ## Output
 
