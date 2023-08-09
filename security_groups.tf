@@ -28,10 +28,7 @@ locals {
     openstack_networking_secgroup_v2.k8_master,
     openstack_networking_secgroup_v2.k8_worker,
     openstack_networking_secgroup_v2.k8_load_balancer,
-    openstack_networking_secgroup_v2.k8_load_balancer_tunnel,
-    var.k8_master_client_groups,
-    var.k8_worker_client_groups,
-    var.k8_bastion_groups
+    openstack_networking_secgroup_v2.k8_load_balancer_tunnel
   ])
   kubernetes_nodes_full_access_groups = [
     openstack_networking_secgroup_v2.k8_master,
