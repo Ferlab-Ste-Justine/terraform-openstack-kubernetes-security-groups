@@ -233,46 +233,6 @@ resource "openstack_networking_secgroup_rule_v2" "bastion_ssh_accessible_groups_
   remote_group_id   = each.value.remote.id
 }
 
-
-//Allow external ssh traffic on accessible groups
-resource "openstack_networking_secgroup_rule_v2" "externally_ssh_accessible_groups_ssh_access" {
-  for_each = {
-    for group in local.externally_ssh_accessible_groups : group.name => group
-  }
-
-  direction         = "ingress"
-  ethertype         = "IPv4"
-  protocol          = "tcp"
-  port_range_min    = 22
-  port_range_max    = 22
-  remote_ip_prefix  = "0.0.0.0/0"
-  security_group_id = each.value.id
-}
-
-resource "openstack_networking_secgroup_rule_v2" "externally_ssh_accessible_groups_icmp_access_v4" {
-  for_each = {
-    for group in local.externally_ssh_accessible_groups : group.name => group
-  }
-
-  direction         = "ingress"
-  ethertype         = "IPv4"
-  protocol          = "icmp"
-  remote_ip_prefix  = "0.0.0.0/0"
-  security_group_id = each.value.id
-}
-
-resource "openstack_networking_secgroup_rule_v2" "externally_ssh_accessible_groups_icmp_access_v6" {
-  for_each = {
-    for group in local.externally_ssh_accessible_groups : group.name => group
-  }
-
-  direction         = "ingress"
-  ethertype         = "IPv6"
-  protocol          = "ipv6-icmp"
-  remote_ip_prefix  = "::/0"
-  security_group_id = each.value.id
-}
-
 //Allow external traffic on the load balancer for the api, ingress and icmp
 resource "openstack_networking_secgroup_rule_v2" "lb_api_external" {
   direction         = "ingress"
