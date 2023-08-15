@@ -36,11 +36,6 @@ variable "k8_load_balancer_tunnel_name" {
   type        = string
 }
 
-variable "k8_bastion_name" {
-  description = "Name of kubernetes bastion security group"
-  type        = string
-}
-
 variable "k8_master_client_groups" {
   description = "List of kubernetes master client security groups"
   type = list(object({
