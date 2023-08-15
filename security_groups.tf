@@ -1,24 +1,24 @@
 # Security Groups
 resource "openstack_networking_secgroup_v2" "k8_master" {
-  name                 = var.k8_master_name
+  name                 = var.master_group_name
   description          = "Security group for kubernetes master"
   delete_default_rules = true
 }
 
 resource "openstack_networking_secgroup_v2" "k8_worker" {
-  name                 = var.k8_worker_name
+  name                 = var.worker_group_name
   description          = "Security group for kubernetes workers"
   delete_default_rules = true
 }
 
 resource "openstack_networking_secgroup_v2" "k8_load_balancer" {
-  name                 = var.k8_load_balancer_name
+  name                 = var.load_balancer_group_name
   description          = "Security group for kubernetes load balancer"
   delete_default_rules = true
 }
 
 resource "openstack_networking_secgroup_v2" "k8_load_balancer_tunnel" {
-  name                 = var.k8_load_balancer_tunnel_name
+  name                 = var.load_balancer_tunnel_group_name
   description          = "Security group for kubernetes tunneled load balancer"
   delete_default_rules = true
 }
@@ -37,13 +37,13 @@ locals {
   kubernetes_master_api_access_groups = flatten([
     openstack_networking_secgroup_v2.k8_load_balancer,
     openstack_networking_secgroup_v2.k8_load_balancer_tunnel,
-    var.k8_master_client_groups,
-    var.k8_bastion_groups
+    var.master_client_groups,
+    var.bastion_groups
   ])
   kubernetes_worker_ingress_access_groups = flatten([
     openstack_networking_secgroup_v2.k8_load_balancer,
     openstack_networking_secgroup_v2.k8_load_balancer_tunnel,
-    var.k8_worker_client_groups
+    var.worker_client_groups
   ])
   bastion_ssh_accessible_groups = [
     openstack_networking_secgroup_v2.k8_master,
@@ -51,11 +51,13 @@ locals {
     openstack_networking_secgroup_v2.k8_load_balancer,
     openstack_networking_secgroup_v2.k8_load_balancer_tunnel
   ]
-  externally_ssh_accessible_groups = flatten([
-    var.k8_bastion_groups,
+  metric_server_accessible_groups = [
+    openstack_networking_secgroup_v2.k8_master,
+    openstack_networking_secgroup_v2.k8_worker,
+    openstack_networking_secgroup_v2.k8_load_balancer,
     openstack_networking_secgroup_v2.k8_load_balancer_tunnel
-  ])
-  bastion_groups_names = [for group in var.k8_bastion_groups: group.name]
+  ]
+  bastion_groups_names = [for group in var.bastion_groups: group.name]
 }
 
 //Allow all v4 and v6 outbound traffic
@@ -197,7 +199,7 @@ resource "openstack_networking_secgroup_rule_v2" "ingress_groups_k8_worker_https
 //Allow bastion ssh traffic to accessible groups
 resource "openstack_networking_secgroup_rule_v2" "bastion_ssh_accessible_groups_icmp_access_v4" {
   for_each = {
-    for pair in setproduct(local.bastion_ssh_accessible_groups, var.k8_bastion_groups) : "${pair[0].name}-${pair[1].name}" => { sg = pair[0], remote = pair[1] }
+    for pair in setproduct(local.bastion_ssh_accessible_groups, var.bastion_groups) : "${pair[0].name}-${pair[1].name}" => { sg = pair[0], remote = pair[1] }
   }
 
   direction         = "ingress"
@@ -209,7 +211,7 @@ resource "openstack_networking_secgroup_rule_v2" "bastion_ssh_accessible_groups_
 
 resource "openstack_networking_secgroup_rule_v2" "bastion_ssh_accessible_groups_icmp_access_v6" {
   for_each = {
-    for pair in setproduct(local.bastion_ssh_accessible_groups, var.k8_bastion_groups) : "${pair[0].name}-${pair[1].name}" => { sg = pair[0], remote = pair[1] }
+    for pair in setproduct(local.bastion_ssh_accessible_groups, var.bastion_groups) : "${pair[0].name}-${pair[1].name}" => { sg = pair[0], remote = pair[1] }
   }
 
   direction         = "ingress"
@@ -221,7 +223,7 @@ resource "openstack_networking_secgroup_rule_v2" "bastion_ssh_accessible_groups_
 
 resource "openstack_networking_secgroup_rule_v2" "bastion_ssh_accessible_groups_ssh_access" {
   for_each = {
-    for pair in setproduct(local.bastion_ssh_accessible_groups, var.k8_bastion_groups) : "${pair[0].name}-${pair[1].name}" => { sg = pair[0], remote = pair[1] }
+    for pair in setproduct(local.bastion_ssh_accessible_groups, var.bastion_groups) : "${pair[0].name}-${pair[1].name}" => { sg = pair[0], remote = pair[1] }
   }
 
   direction         = "ingress"
@@ -229,6 +231,45 @@ resource "openstack_networking_secgroup_rule_v2" "bastion_ssh_accessible_groups_
   protocol          = "tcp"
   port_range_min    = 22
   port_range_max    = 22
+  security_group_id = each.value.sg.id
+  remote_group_id   = each.value.remote.id
+}
+
+//Allow Metric Server traffic to accessible groups
+resource "openstack_networking_secgroup_rule_v2" "metric_server_accessible_groups_icmp_access_v4" {
+  for_each = {
+    for pair in setproduct(local.metric_server_accessible_groups, var.metrics_server_groups) : "${pair[0].name}-${pair[1].name}" => { sg = pair[0], remote = pair[1] }
+  }
+
+  direction         = "ingress"
+  ethertype         = "IPv4"
+  protocol          = "icmp"
+  security_group_id = each.value.sg.id
+  remote_group_id   = each.value.remote.id
+}
+
+resource "openstack_networking_secgroup_rule_v2" "metric_server_accessible_groups_icmp_access_v6" {
+  for_each = {
+    for pair in setproduct(local.metric_server_accessible_groups, var.metrics_server_groups) : "${pair[0].name}-${pair[1].name}" => { sg = pair[0], remote = pair[1] }
+  }
+
+  direction         = "ingress"
+  ethertype         = "IPv6"
+  protocol          = "ipv6-icmp"
+  security_group_id = each.value.sg.id
+  remote_group_id   = each.value.remote.id
+}
+
+resource "openstack_networking_secgroup_rule_v2" "metric_server_accessible_groups_node_exporter_access" {
+  for_each = {
+    for pair in setproduct(local.metric_server_accessible_groups, var.metrics_server_groups) : "${pair[0].name}-${pair[1].name}" => { sg = pair[0], remote = pair[1] }
+  }
+
+  direction         = "ingress"
+  ethertype         = "IPv4"
+  protocol          = "tcp"
+  port_range_min    = 9100
+  port_range_max    = 9100
   security_group_id = each.value.sg.id
   remote_group_id   = each.value.remote.id
 }
@@ -282,7 +323,7 @@ resource "openstack_networking_secgroup_rule_v2" "lb_icmp_external_v6" {
 
 //Allow all nodeport inbound traffic from worker clients
 resource "openstack_networking_secgroup_rule_v2" "k8_worker_client_access" {
-  for_each          = { for group in var.k8_worker_client_groups : group.name => group }
+  for_each          = { for group in var.worker_client_groups : group.name => group }
   direction         = "ingress"
   ethertype         = "IPv4"
   protocol          = "tcp"

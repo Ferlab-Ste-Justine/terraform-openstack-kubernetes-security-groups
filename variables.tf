@@ -16,36 +16,27 @@ variable "workers_ingress_https_port" {
   default = 30001
 }
 
-variable "k8_master_name" {
+variable "master_group_name" {
   description = "Name for kubernetes master security group"
   type        = string
 }
 
-variable "k8_worker_name" {
+variable "worker_group_name" {
   description = "Name for kubernetes worker security group"
   type        = string
 }
 
-variable "k8_load_balancer_name" {
+variable "load_balancer_group_name" {
   description = "Name for kubernetes load balancer security group"
   type        = string
 }
 
-variable "k8_load_balancer_tunnel_name" {
+variable "load_balancer_tunnel_group_name" {
   description = "Name for kubernetes load balancer tunnel security group"
   type        = string
 }
 
-variable "k8_master_client_groups" {
-  description = "List of kubernetes master client security groups"
-  type = list(object({
-    name = string
-    id   = string
-  }))
-  default = []
-}
-
-variable "k8_bastion_groups" {
+variable "bastion_groups" {
   description = "List of kubernetes bastion security groups"
   type = list(object({
     name = string
@@ -54,7 +45,25 @@ variable "k8_bastion_groups" {
   default = []
 }
 
-variable "k8_worker_client_groups" {
+variable "metrics_server_groups" {
+  description = "List of kubernetes metric servers security groups"
+  type = list(object({
+    name = string
+    id   = string
+  }))
+  default = []
+}
+
+variable "master_client_groups" {
+  description = "List of kubernetes master client security groups"
+  type = list(object({
+    name = string
+    id   = string
+  }))
+  default = []
+}
+
+variable "worker_client_groups" {
   description = "List of kubernetes worker client security groups"
   type = list(object({
     name = string
