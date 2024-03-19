@@ -332,3 +332,14 @@ resource "openstack_networking_secgroup_rule_v2" "k8_worker_client_access" {
   remote_group_id   = each.value.id
   security_group_id = openstack_networking_secgroup_v2.k8_worker.id
 }
+
+// Allow outbound traffic to Jeremy vm
+resource "openstack_networking_secgroup_rule_v2" "workers_to_spark_driver_dynamic_port" {
+  direction         = "egress"
+  ethertype         = "IPv4"
+  protocol          = "tcp"
+  port_range_min    = 1
+  port_range_max    = 65535
+  remote_ip_prefix  = "198.168.188.242/32"
+  security_group_id = openstack_networking_secgroup_v2.k8_worker.id
+}
